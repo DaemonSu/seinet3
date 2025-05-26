@@ -7,6 +7,7 @@ def parse_args():
     parser.add_argument('--input_dim', default=2, type=int)
     parser.add_argument('--device', default='cuda:0', type=str)
     parser.add_argument('--epochs', default=60, type=int)
+    parser.add_argument('--epochs2', default=20, type=int)
     parser.add_argument('--batch_size', default=128, type=int)
     parser.add_argument('--seed', default=42, type=int)
     parser.add_argument('--lr', default=0.001, type=float)
@@ -17,7 +18,7 @@ def parse_args():
     parser.add_argument('--embedding_dim', default=1024, type=int)
 
     parser.add_argument('--threshold', default=10000, type=int)
-    parser.add_argument('--open_threshold', type=float, default=0.79, help='Threshold for open-set decision')
+    parser.add_argument('--open_threshold', type=float, default=0.74, help='Threshold for open-set decision')
     parser.add_argument('--open_detector_threshold', type=float, default=0.000005, help='Threshold for open-set decision')
     parser.add_argument('--con_weight', default=1, type=float)
     parser.add_argument('--proto_weight', default=0.5, type=float)

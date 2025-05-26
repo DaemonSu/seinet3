@@ -1,9 +1,8 @@
 import torch
-import numpy as np
 from torch.utils.data import DataLoader
 from config import parse_args
 from dataset import SEIDataset
-from utils import load_object, accuracy, testAccuracy, analyze_logits_distribution, compute_energy
+from util.utils import load_object
 
 args = parse_args()
 device = args.device

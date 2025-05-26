@@ -1,12 +1,11 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from dataset import KnownDataset, UnknownDataset
 from model_open import FeatureExtractor, ClassifierHead
-from loss import SupConLoss
+from loss import SupConLoss_DynamicMargin
 from PrototypeMemory import PrototypeMemory
-from utils import set_seed, adjust_lr, accuracy, topaccuracy, save_object
+from util.utils import set_seed, adjust_lr, topaccuracy, save_object
 # import argparse
 import os
 from config import parse_args
@@ -27,7 +26,9 @@ def train_open_contrastive(config):
     classifier = ClassifierHead(1024, 10).to(config.device)
 
     # ============ 损失函数 ============
-    supcon_loss_fn = SupConLoss(temperature=0.07)
+    # supcon_loss_fn = SupConLoss(temperature=0.07)
+    # supcon_loss_fn = SupConLoss_SoftNegative(temperature=0.07)
+    supcon_loss_fn = SupConLoss_DynamicMargin()
     ce_loss_fn = nn.CrossEntropyLoss()
 
     # ============ 优化器 ============
@@ -73,10 +74,9 @@ def train_open_contrastive(config):
             feat_all = torch.cat([feat_known, feat_unknown], dim=0)
             labels_all = torch.cat([y_known, torch.full((x_unknown.size(0),), -1, device=config.device)], dim=0)
             con_loss = supcon_loss_fn(feat_all, labels_all)
-            # proto_loss = ((feat_known - prototype.get(y_known)) ** 2).sum(dim=1).mean()
 
-            # loss = ce_loss + config.con_weight * con_loss+ config.proto_weight * proto_loss
-            loss = ce_loss + config.con_weight * con_loss
+            con_weight = 1.0 + max(0.0, 1.0 - ce_loss.item()) * 1.5
+            loss = ce_loss + con_weight * con_loss
 
             optimizer.zero_grad()
             loss.backward()

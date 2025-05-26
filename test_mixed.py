@@ -2,7 +2,7 @@ import os
 
 import torch
 import torch.nn.functional as F
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import numpy as np
@@ -10,6 +10,8 @@ import numpy as np
 from config import parse_args
 from dataset import MixedDataset
 from model_open import FeatureExtractor, ClassifierHead
+from util.visualize import visualize_features
+
 
 
 def test_mixed(encoder, classifier, test_loader, config):
@@ -20,10 +22,14 @@ def test_mixed(encoder, classifier, test_loader, config):
     all_labels = []
     all_logits = []
 
+    all_feats = []
+
+
     with torch.no_grad():
         for x, y in tqdm(test_loader, desc="Testing"):
             x, y = x.to(config.device), y.to(config.device)
             feat = encoder(x)
+
             logits = classifier(feat)
             prob = F.softmax(logits, dim=1)
             max_probs, preds = prob.max(dim=1)
@@ -39,7 +45,9 @@ def test_mixed(encoder, classifier, test_loader, config):
             all_preds.extend(pred_labels)
             all_labels.extend(y.cpu().tolist())
             all_logits.append(max_probs.cpu().numpy())
+            all_feats.extend(feat.cpu().numpy())
 
+    visualize_features(np.array(all_feats),np.array(all_labels), known_class_count=10, method='tsne')
     all_logits = np.concatenate(all_logits)
 
     # Convert to numpy arrays
@@ -73,6 +81,13 @@ def test_mixed(encoder, classifier, test_loader, config):
     print(f"Open-set Recognition Rate: {open_recognition_rate * 100:.2f}%")
     print(f"Overall Accuracy        : {overall_acc * 100:.2f}%")
     print(f"Open-set F1 Score       : {f1_open:.4f}")
+
+    # 混淆矩阵
+    try:
+        print("\nConfusion Matrix:")
+        print(confusion_matrix(all_labels, all_preds, labels=list(range(10)) + [-1]))
+    except:
+        print("Warning: Unable to compute confusion matrix for open-set labels.")
 
     return closed_acc, open_recognition_rate, overall_acc, f1_open
 

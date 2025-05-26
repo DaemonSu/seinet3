@@ -1,15 +1,12 @@
 import os
 import torch
-import numpy as np
 from torch import nn
-from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
-from OpenSetDetector import OpenSetDetector, FeatureMatchNet
+from OpenSetDetector import FeatureMatchNet
 from dataset import SEIDataset
 from config import parse_args
 from evaluate import evaluate_openset_predictions
-from utils import load_object, accuracy, save_checkpoint, testAccuracy
-from loss import FocalLoss
+from util.utils import load_object, save_checkpoint
 
 torch.set_printoptions(profile="full")
 

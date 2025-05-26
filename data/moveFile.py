@@ -25,8 +25,8 @@ def move_random_files(source_folder, destination_folder, num_files_to_move):
 
 
 # 示例用法
-source_folder = "F:/seidata/IQdata/openset"  # 源文件夹路径
-destination_folder = "F:/seidata/IQdata/openset2-open"  # 目标文件夹路径
-num_files_to_move = 2200  # 需要移动的文件数量
+source_folder = "F:/seidata/IQdata/val"  # 源文件夹路径
+destination_folder = "F:/seidata/IQdata/val2"  # 目标文件夹路径
+num_files_to_move = 5000  # 需要移动的文件数量
 
 move_random_files(source_folder, destination_folder, num_files_to_move)

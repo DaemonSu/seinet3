@@ -3,8 +3,8 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from dataset import KnownDataset, UnknownDataset
 from model_open import FeatureExtractor, ClassifierHead
-from utils import set_seed
-from sklearn.metrics import classification_report, confusion_matrix, f1_score
+from util.utils import set_seed
+from sklearn.metrics import confusion_matrix, f1_score
 import numpy as np
 import os
 from config import parse_args

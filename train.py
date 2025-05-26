@@ -7,7 +7,7 @@ from loss import ContrastiveLossWithCE
 from prototype import PrototypeMemory
 from dataset import SEIDataset
 from config import parse_args
-from utils import accuracy,save_checkpoint,save_object
+from util.utils import accuracy,save_checkpoint,save_object
 from torch.optim.lr_scheduler import StepLR
 
 args = parse_args()
