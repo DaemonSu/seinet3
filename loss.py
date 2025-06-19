@@ -92,7 +92,8 @@ class SupConLoss_SoftNegative(nn.Module):
 
 
 class SupConLoss_DynamicMargin(nn.Module):
-    def __init__(self, temperature=0.07, base_margin=0.3, beta=0.4):
+    # def __init__(self, temperature=0.07, base_margin=0.3, beta=0.4):
+    def __init__(self, temperature=0.07, base_margin=0.0, beta=0.0):
         super(SupConLoss_DynamicMargin, self).__init__()
         self.temperature = temperature
         self.base_margin = base_margin
@@ -113,19 +114,21 @@ class SupConLoss_DynamicMargin(nn.Module):
         logits_mask = torch.ones_like(mask).fill_diagonal_(0)
         exp_sim = torch.exp(similarity_matrix) * logits_mask
 
-        # ----------------------------
-        # Dynamic Margin for open-set negatives
-        # ----------------------------
+
         open_mask_row = (labels == -1).float()
         open_mask_col = (labels.T == -1).float()
         open_mask = open_mask_row @ torch.ones_like(open_mask_col) + torch.ones_like(open_mask_row) @ open_mask_col
         open_mask = torch.clamp(open_mask, 0, 1) * logits_mask
 
+        # sim_before = similarity_matrix.clone()
+
+        # Apply dynamic margin
         dynamic_margin = self.base_margin + self.beta * (1 - similarity_matrix.detach())
         similarity_matrix = similarity_matrix - open_mask * dynamic_margin
+        exp_sim = torch.exp(similarity_matrix) * logits_mask
 
+        # Final log_prob and loss
         log_prob = similarity_matrix - torch.log(exp_sim.sum(1, keepdim=True) + self.eps)
-
         mean_log_prob_pos = (mask * log_prob).sum(1) / (mask.sum(1) + self.eps)
         loss = -mean_log_prob_pos.mean()
 

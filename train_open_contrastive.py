@@ -15,10 +15,10 @@ def train_open_contrastive(config):
     set_seed(config.seed)
 
     # ============ 数据加载 ============
-    known_trainset = KnownDataset(config.train_data)
+    known_trainset = KnownDataset(config.train_data_close)
     known_loader = DataLoader(known_trainset, config.batch_size, True)
 
-    unknown_trainset = UnknownDataset(config.val2)
+    unknown_trainset = UnknownDataset(config.train_data_open)
     unknown_loader = DataLoader(unknown_trainset, batch_size=config.batch_size, shuffle=True)
 
     # ============ 模型初始化 ============
@@ -75,7 +75,9 @@ def train_open_contrastive(config):
             labels_all = torch.cat([y_known, torch.full((x_unknown.size(0),), -1, device=config.device)], dim=0)
             con_loss = supcon_loss_fn(feat_all, labels_all)
 
+            # print(f"[Epoch {epoch + 1}] ce_loss: {ce_loss:.4f} | con_loss: {con_loss:.4f}")
             con_weight = 1.0 + max(0.0, 1.0 - ce_loss.item()) * 1.5
+            # con_weight =0
             loss = ce_loss + con_weight * con_loss
 
             optimizer.zero_grad()

@@ -47,7 +47,7 @@ def test_mixed(encoder, classifier, test_loader, config):
             all_logits.append(max_probs.cpu().numpy())
             all_feats.extend(feat.cpu().numpy())
 
-    visualize_features(np.array(all_feats),np.array(all_labels), known_class_count=10, method='tsne')
+    visualize_features(np.array(all_feats),np.array(all_labels), known_class_count=11, method='tsne')
     all_logits = np.concatenate(all_logits)
 
     # Convert to numpy arrays
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     # ============ 数据加载 ============
 
     mixed_testset = MixedDataset(config.test_mixed)
-    mixed_loader = DataLoader(mixed_testset, batch_size=config.batch_size, shuffle=False)
+    mixed_loader = DataLoader(mixed_testset, batch_size=config.batch_size, shuffle=True)
 
     # ============ 加载模型 ============
     encoder = FeatureExtractor(1024).to(config.device)

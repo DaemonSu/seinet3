@@ -7,36 +7,32 @@ from sklearn.model_selection import train_test_split
 # ---------------------------
 #  1️⃣ 读取 IQ 数据文件
 # ---------------------------
-DATA_PATH = "G:/博士科研/一汽课题/论文阅读/综述/131/neu_m044q5210/KRI-16Devices-RawData/32ftbak"  # 文件夹路径，存放 16 个设备的 IQ 数据文件
+DATA_PATH = "G:/博士科研/一汽课题/论文阅读/综述/131/neu_m044q5210/KRI-16Devices-RawData/26ft-exp"  # 文件夹路径，存放 16 个设备的 IQ 数据文件
 SAMPLE_SIZE = 7000  # 每条数据包含 7000 个 IQ 采样点
 STRIDE = 7000       # 步长（可调）
 TRAIN_DEVICES = 10
 VAL_DEVICES = 3
 OPENSET_DEVICES = 3
 
-SAVE_PATH = "F:/seidata/IQdata"  # 训练数据保存目录
+SAVE_PATH = "F:/seidata/26ft-exp"  # 训练数据保存目录
 
 
 def load_iq_data(file_path):
     """
     加载 IQ 数据，并确保数据格式正确
     """
-    # path = "F:/seidata/IQdata/train2/device_05_0551.npy"
-    iq_data =  np.fromfile(file_path, dtype=np.complex64)
+
+
+    iq_data =  np.fromfile(file_path, dtype=np.complex128)
     if np.iscomplexobj(iq_data):  # 检测是否是复数格式
 
-        # print("前10个IQ数据:", iq_data[:10])
-        print("I:", iq_data[:800].real)
-        print("Q:", iq_data[:800].imag)
 
         image= torch.from_numpy(iq_data.imag)
- # 拆分 I/Q 组成 (N,2)
+        # 拆分 I/Q 组成 (N,2)
         q_abs = torch.abs(image)
         q_fft = torch.fft.fft(image).abs()
         # iq_data = np.vstack((iq_data.imag,q_abs,q_fft))
         iq_data = np.column_stack((iq_data.imag, q_abs, q_fft))
-
-
 
     return iq_data
 
@@ -69,11 +65,7 @@ def process_data():
     openset_files = device_files[TRAIN_DEVICES + VAL_DEVICES:]
 
     def process_device(files, save_folder, label_offset=0):
-        """
-        处理多个设备的 IQ 数据：
-        - 按 (200, 2) 进行切片
-        - 每个数据片段存储为独立的 `.npy` 文件
-        """
+
         save_path = os.path.join(SAVE_PATH, save_folder)
         os.makedirs(save_path, exist_ok=True)
 
@@ -100,25 +92,6 @@ def process_data():
     process_device(val_files,"val", label_offset=TRAIN_DEVICES)
     process_device(openset_files,"openset", label_offset=TRAIN_DEVICES + VAL_DEVICES)
 
-    # 创建 PyTorch Dataset
-    # train_dataset = SEIDataset(train_x, train_y)
-    # val_dataset = SEIDataset(val_x, val_y)
-    # openset_dataset = SEIDataset(openset_x, openset_y)
-
-    # return train_dataset, val_dataset, openset_dataset
-
-
-# ---------------------------
-#  3️⃣ 创建 DataLoader
-# ---------------------------
-def get_dataloaders(batch_size=32):
-    train_dataset, val_dataset, openset_dataset = process_data()
-
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
-    openset_loader = DataLoader(openset_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
-
-    return train_loader, val_loader, openset_loader
 
 
 # ---------------------------
@@ -126,7 +99,4 @@ def get_dataloaders(batch_size=32):
 # ---------------------------
 if __name__ == "__main__":
     process_data()
-    # get_dataloaders()
-    # print(f"训练集样本数: {len(train_loader.dataset)}")
-    # print(f"验证集样本数: {len(val_loader.dataset)}")
-    # print(f"开集测试样本数: {len(openset_loader.dataset)}")
+
