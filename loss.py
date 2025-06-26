@@ -93,7 +93,7 @@ class SupConLoss_SoftNegative(nn.Module):
 
 class SupConLoss_DynamicMargin(nn.Module):
     # def __init__(self, temperature=0.07, base_margin=0.3, beta=0.4):
-    def __init__(self, temperature=0.07, base_margin=0.0, beta=0.0):
+    def __init__(self, temperature=0.13, base_margin=0.0, beta=0.6):
         super(SupConLoss_DynamicMargin, self).__init__()
         self.temperature = temperature
         self.base_margin = base_margin
@@ -111,8 +111,9 @@ class SupConLoss_DynamicMargin(nn.Module):
         valid_mask = (labels != -1).float()
 
         mask = (labels == labels.T).float() * (valid_mask @ valid_mask.T)
-        logits_mask = torch.ones_like(mask).fill_diagonal_(0)
+        logits_mask = 1 - torch.eye(batch_size, device=features.device)
         exp_sim = torch.exp(similarity_matrix) * logits_mask
+
 
 
         open_mask_row = (labels == -1).float()

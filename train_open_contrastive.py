@@ -2,16 +2,15 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from dataset import KnownDataset, UnknownDataset
-from model_open import FeatureExtractor, ClassifierHead
+from model_mix import FeatureExtractor, ClassifierHead
 from loss import SupConLoss_DynamicMargin
 from PrototypeMemory import PrototypeMemory
 from util.utils import set_seed, adjust_lr, topaccuracy, save_object
-# import argparse
 import os
 from config import parse_args
+import torch.nn.functional as F
 
 def train_open_contrastive(config):
-    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     set_seed(config.seed)
 
     # ============ 数据加载 ============
@@ -26,8 +25,6 @@ def train_open_contrastive(config):
     classifier = ClassifierHead(1024, 10).to(config.device)
 
     # ============ 损失函数 ============
-    # supcon_loss_fn = SupConLoss(temperature=0.07)
-    # supcon_loss_fn = SupConLoss_SoftNegative(temperature=0.07)
     supcon_loss_fn = SupConLoss_DynamicMargin()
     ce_loss_fn = nn.CrossEntropyLoss()
 
@@ -70,16 +67,23 @@ def train_open_contrastive(config):
             logits = classifier(feat_known)
             ce_loss = ce_loss_fn(logits, y_known)
 
+            logits_unknown = classifier(feat_unknown)
+            probs_unknown = F.softmax(logits_unknown, dim=1)
+            max_probs, _ = probs_unknown.max(dim=1)
+
+            # 惩罚：鼓励开集样本的最大概率越低越好
+            # 比如超过阈值的部分才被惩罚（soft margin）
+            penalty = torch.clamp(max_probs -  config.open_threshold, min=0)
+            penalty_loss = penalty.mean()
+
+
             # 对比损失：已知类之间 + 已知类 vs 未知类
             feat_all = torch.cat([feat_known, feat_unknown], dim=0)
             labels_all = torch.cat([y_known, torch.full((x_unknown.size(0),), -1, device=config.device)], dim=0)
             con_loss = supcon_loss_fn(feat_all, labels_all)
 
-            # print(f"[Epoch {epoch + 1}] ce_loss: {ce_loss:.4f} | con_loss: {con_loss:.4f}")
             con_weight = 1.0 + max(0.0, 1.0 - ce_loss.item()) * 1.5
-            # con_weight =0
-            loss = ce_loss + con_weight * con_loss
-
+            loss = ce_loss + con_weight * con_loss + penalty_loss
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -97,8 +101,11 @@ def train_open_contrastive(config):
 
     # 模型保存
     os.makedirs(config.save_dir, exist_ok=True)
-    torch.save({'encoder': encoder.state_dict(), 'classifier': classifier.state_dict()},
-               os.path.join(config.save_dir, 'model_opencon2.pth'))
+    torch.save({'encoder': encoder.state_dict()},
+               os.path.join(config.save_dir, 'encoder.pth'))
+
+    torch.save({'classifier': classifier.state_dict()},
+               os.path.join(config.save_dir, 'classifier.pth'))
 
     # 将原型以文件的形式保存到文件夹中
     save_object(prototype, 'model/prototype2.pkl')

@@ -3,7 +3,7 @@ import torch.nn.functional as F
 
 
 class PrototypeMemory:
-    def __init__(self, num_classes, feature_dim, device, momentum=0.9):
+    def __init__(self, num_classes, feature_dim, device, momentum=0.3):
         self.num_classes = num_classes
         self.feature_dim = feature_dim
         self.device = device
@@ -11,6 +11,20 @@ class PrototypeMemory:
 
         self.prototypes = torch.zeros(num_classes, feature_dim, device=device)
         self.initialized = torch.zeros(num_classes, dtype=torch.bool, device=device)
+
+    # @torch.no_grad()
+    # def update(self, features, labels):
+    #     for i in range(self.num_classes):
+    #         mask = (labels == i)
+    #         if mask.sum() == 0:
+    #             continue
+    #         feat_mean = F.normalize(features[mask].mean(dim=0, keepdim=True), dim=-1).squeeze(0)
+    #         if self.initialized[i]:
+    #             updated = self.momentum * self.prototypes[i] + (1 - self.momentum) * feat_mean
+    #             self.prototypes[i] = F.normalize(updated, dim=-1)
+    #         else:
+    #             self.prototypes[i] = feat_mean
+    #             self.initialized[i] = True
 
     @torch.no_grad()
     def update(self, features, labels):
@@ -37,3 +51,29 @@ class PrototypeMemory:
 
     def get_all(self):
         return self.prototypes
+
+    import torch.nn.functional as F
+
+    def distance(self, features, metric='euclidean'):
+        """
+        features: [B, D]
+        Return: [B, num_classes] 距离矩阵
+        """
+        if metric == 'euclidean':
+            # [B, 1, D] - [1, C, D] -> [B, C, D] -> L2 norm
+            diff = features.unsqueeze(1) - self.prototypes.unsqueeze(0)
+            dist = torch.norm(diff, dim=2)  # [B, C]
+        elif metric == 'cosine':
+            # normalize
+            features_norm = F.normalize(features, dim=1)
+            prototypes_norm = F.normalize(self.prototypes, dim=1)
+            dist = 1 - torch.matmul(features_norm, prototypes_norm.T)  # [B, C], cosine distance
+        else:
+            raise ValueError(f"Unsupported metric: {metric}")
+        return dist
+    # def distance(self, features, metric='cosine'):
+    #     features_norm = F.normalize(features, dim=1)
+    #     prototypes_norm = F.normalize(self.prototypes, dim=1)
+    #     return 1 - torch.matmul(features_norm, prototypes_norm.T)
+
+

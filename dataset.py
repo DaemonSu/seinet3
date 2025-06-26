@@ -42,7 +42,8 @@ class KnownDataset(Dataset):
         self.samples = []
 
         # 文件名示例：device_09_5549.npy
-        pattern = re.compile(r'device_(\d+)_\d+\.npy')
+        # pattern = re.compile(r'device_(\d+)_\d+\.npy')
+        pattern = re.compile(r'device_(\d+)_\d+(?:_[\w\d]+)?\.npy')
 
         for file in os.listdir(root):
             if file.endswith('.npy'):
@@ -85,7 +86,9 @@ class MixedDataset(Dataset):
         self.samples = []
 
         # 文件名示例：device_09_5549.npy
-        pattern = re.compile(r'device_(\d+)_\d+\.npy')
+        # pattern = re.compile(r'device_(\d+)_\d+\.npy')
+
+        pattern = re.compile(r'device_(\d+)_\d+(?:_[\w\d]+)?\.npy')
 
         for file in os.listdir(root):
             if file.endswith('.npy'):
@@ -102,7 +105,7 @@ class MixedDataset(Dataset):
         path, label = self.samples[index]
         data = np.load(path)  # shape = [2, L]
         data = torch.tensor(data, dtype=torch.float32)
-        if  label > 10:
+        if  label > 7:
            label= -1
         return data, label # unknown 类标记为 -1
 

@@ -7,14 +7,14 @@ from sklearn.model_selection import train_test_split
 # ---------------------------
 #  1️⃣ 读取 IQ 数据文件
 # ---------------------------
-DATA_PATH = "G:/博士科研/一汽课题/论文阅读/综述/131/neu_m044q5210/KRI-16Devices-RawData/26ft-exp"  # 文件夹路径，存放 16 个设备的 IQ 数据文件
+DATA_PATH = "G:/博士科研/一汽课题/论文阅读/综述/131/neu_m044q5210/KRI-16Devices-RawData/32ft-bak"  # 文件夹路径，存放 16 个设备的 IQ 数据文件
 SAMPLE_SIZE = 7000  # 每条数据包含 7000 个 IQ 采样点
 STRIDE = 7000       # 步长（可调）
-TRAIN_DEVICES = 10
-VAL_DEVICES = 3
-OPENSET_DEVICES = 3
+TRAIN_DEVICES = 8
+VAL_DEVICES = 4
+OPENSET_DEVICES = 4
 
-SAVE_PATH = "F:/seidata/26ft-exp"  # 训练数据保存目录
+SAVE_PATH = "G:/seidata/32ft-exp2"  # 训练数据保存目录
 
 
 def load_iq_data(file_path):

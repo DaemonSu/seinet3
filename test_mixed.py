@@ -9,7 +9,7 @@ import numpy as np
 
 from config import parse_args
 from dataset import MixedDataset
-from model_open import FeatureExtractor, ClassifierHead
+from model_mix import FeatureExtractor, ClassifierHead
 from util.visualize import visualize_features
 
 
@@ -42,12 +42,19 @@ def test_mixed(encoder, classifier, test_loader, config):
                 else:
                     pred_labels.append(pred.item())  # Closed-set prediction
 
+            # 阈值判断
+            # pred_labels = torch.where(
+            #     max_probs < config.open_threshold,  # 阈值判别
+            #     torch.tensor(-1, device=config.device),
+            #     preds
+            # )
+
             all_preds.extend(pred_labels)
             all_labels.extend(y.cpu().tolist())
             all_logits.append(max_probs.cpu().numpy())
             all_feats.extend(feat.cpu().numpy())
 
-    visualize_features(np.array(all_feats),np.array(all_labels), known_class_count=11, method='tsne')
+    visualize_features(np.array(all_feats),np.array(all_labels), known_class_count=8, method='tsne')
     all_logits = np.concatenate(all_logits)
 
     # Convert to numpy arrays
@@ -85,7 +92,7 @@ def test_mixed(encoder, classifier, test_loader, config):
     # 混淆矩阵
     try:
         print("\nConfusion Matrix:")
-        print(confusion_matrix(all_labels, all_preds, labels=list(range(10)) + [-1]))
+        print(confusion_matrix(all_labels, all_preds, labels=list(range(8)) + [-1]))
     except:
         print("Warning: Unable to compute confusion matrix for open-set labels.")
 
@@ -103,9 +110,11 @@ if __name__ == "__main__":
     encoder = FeatureExtractor(1024).to(config.device)
     classifier = ClassifierHead(1024, 10).to(config.device)
 
-    ckpt = torch.load(os.path.join(config.save_dir, 'model_opencon2.pth'), map_location=config.device)
-    encoder.load_state_dict(ckpt['encoder'])
-    classifier.load_state_dict(ckpt['classifier'])
+    ckpt1 = torch.load(os.path.join(config.save_dir, 'encoder.pth'), map_location=config.device)
+
+    ckpt2 = torch.load(os.path.join(config.save_dir, 'classifier.pth'), map_location=config.device)
+    encoder.load_state_dict(ckpt1['encoder'])
+    classifier.load_state_dict(ckpt2['classifier'])
 
 
     # 假设已有：encoder, classifier, config, test_loader
